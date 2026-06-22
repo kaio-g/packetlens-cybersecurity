@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PacketLens - Learn Wireshark & tcpdump Packet Analysis</title>
+    <meta name="description" content="An interactive web application to help beginners learn network traffic analysis, TCP/UDP protocols, PCAP structure, Wireshark, and tcpdump.">
+    <!-- Local CSS styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="cyber-theme">
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="glow-svg">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+                        <line x1="19.07" y1="4.93" x2="14.83" y2="9.17"></line>
+                        <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+                        <line x1="9.17" y1="14.83" x2="4.93" y2="19.07"></line>
+                    </svg>
+                </span>
+                <h1 class="brand-title">Packet<span>Lens</span></h1>
+            </div>
+            
+            <div class="system-status">
+                <div class="status-indicator online"></div>
+                <span class="status-text">ANALYZER_ONLINE</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-tab="dashboard" id="btn-dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    <span>Protocol Explorer</span>
+                </button>
+                <button class="nav-btn" data-tab="pcap-anatomy" id="btn-pcap">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>PCAP Anatomy</span>
+                </button>
+                <button class="nav-btn" data-tab="cheatsheets" id="btn-cheatsheets">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        <line x1="9" y1="12" x2="15" y2="12"></line>
+                        <line x1="9" y1="16" x2="15" y2="16"></line>
+                    </svg>
+                    <span>Filters & Commands</span>
+                </button>
+                <button class="nav-btn" data-tab="quiz" id="btn-quiz">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>Protocol Quiz</span>
+                </button>
+                <button class="nav-btn" data-tab="linkedin" id="btn-linkedin">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                        <rect x="2" y="9" width="4" height="12"></rect>
+                        <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                    <span>Share Accomplishment</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>PacketLens v1.0.0</p>
+                <p class="console-sub">Local Network Sandbox</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Dashboard Bar -->
+            <header class="top-bar">
+                <div class="bar-title-section">
+                    <h2 class="section-title" id="current-tab-title">Protocol Explorer</h2>
+                    <p class="section-subtitle" id="current-tab-subtitle">Click and inspect network traffic fundamentals at the packet level.</p>
+                </div>
+                <div class="network-indicators">
+                    <div class="indicator-item">
+                        <span class="indicator-label">IP:</span>
+                        <span class="indicator-value select-all">127.0.0.1</span>
+                    </div>
+                    <div class="indicator-item">
+                        <span class="indicator-label">MTU:</span>
+                        <span class="indicator-value">1500</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- TAB 1: PROTOCOL EXPLORER (DASHBOARD) -->
+            <section class="tab-panel active" id="tab-dashboard">
+                <div class="search-container">
+                    <div class="search-box-wrapper">
+                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="protocol-search" placeholder="Search protocols (e.g. TCP, HTTPS, Layer 4, UDP, Port 53, connectionless...)" autocomplete="off">
+                    </div>
+                    <div class="search-stats" id="search-stats">Showing 6 of 6 protocols</div>
+                </div>
+
+                <div class="protocols-grid" id="protocols-grid">
+                    {% for key, proto in protocols.items() %}
+                    <div class="protocol-card" data-protocol="{{ key }}" data-layer="{{ proto.layer }}" data-port="{{ proto.port }}" data-name="{{ proto.name }}">
+                        <div class="card-header">
+                            <span class="layer-badge">{{ proto.layer }}</span>
+                            <span class="port-badge">Port: {{ proto.port }}</span>
+                        </div>
+                        <h3 class="card-title">{{ key }}</h3>
+                        <p class="card-fullname">{{ proto.name }}</p>
+                        
+                        <div class="characteristics-list">
+                            {% for char in proto.characteristics %}
+                            <div class="char-tag">{{ char }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <button class="inspect-btn" onclick="openProtocolDetails('{{ key }}')">
+                            <span>Inspect Protocol</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Protocol Details Modal/Overlay (Hidden by default) -->
+                <div class="protocol-overlay" id="protocol-overlay">
+                    <div class="overlay-card">
+                        <button class="overlay-close" onclick="closeProtocolDetails()">&times;</button>
+                        
+                        <div class="overlay-header">
+                            <div>
+                                <span class="layer-badge" id="overlay-layer"></span>
+                                <span class="port-badge" id="overlay-port"></span>
+                            </div>
+                            <h2 id="overlay-name"></h2>
+                        </div>
+                        
+                        <div class="overlay-body">
+                            <div class="info-section">
+                                <h3>Overview & Purpose</h3>
+                                <p id="overlay-description"></p>
+                            </div>
+
+                            <!-- TCP Handshake Interactive Demo -->
+                            <div class="interactive-diagram-container" id="tcp-handshake-section" style="display: none;">
+                                <h3>Interactive 3-Way Handshake Simulation</h3>
+                                <p class="diagram-note">Follow the client-server interaction to establish a TCP socket. Click the steps to progress.</p>
+                                
+                                <div class="handshake-viewport">
+                                    <div class="node host-client">
+                                        <div class="node-label">Client</div>
+                                        <div class="node-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                        </div>
+                                        <div class="node-state" id="client-state">CLOSED</div>
+                                    </div>
+
+                                    <div class="packet-flow-lines">
+                                        <div class="packet-arrow" id="handshake-packet">
+                                            <span class="packet-label" id="packet-flags-label">SYN</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="node host-server">
+                                        <div class="node-label">Server</div>
+                                        <div class="node-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                                        </div>
+                                        <div class="node-state" id="server-state">LISTEN</div>
+                                    </div>
+                                </div>
+
+                                <div class="handshake-steps-nav">
+                                    <button class="step-btn active" id="hs-step-0" onclick="setHandshakeStep(0)">Reset</button>
+                                    <button class="step-btn" id="hs-step-1" onclick="setHandshakeStep(1)">1. Send SYN</button>
+                                    <button class="step-btn" id="hs-step-2" onclick="setHandshakeStep(2)">2. Send SYN-ACK</button>
+                                    <button class="step-btn" id="hs-step-3" onclick="setHandshakeStep(3)">3. Send ACK</button>
+                                </div>
+
+                                <div class="step-detail-box" id="handshake-step-desc">
+                                    Click '1. Send SYN' to start the TCP handshake process.
+                                </div>
+                            </div>
+
+                            <!-- UDP Diagram -->
+                            <div class="interactive-diagram-container" id="udp-flow-section" style="display: none;">
+                                <h3>UDP Datagram Transmission Simulation</h3>
+                                <p class="diagram-note">UDP is stateless and connectionless. It fires packets without confirming connection setup or delivery.</p>
+                                
+                                <div class="handshake-viewport">
+                                    <div class="node host-client">
+                                        <div class="node-label">Client</div>
+                                        <div class="node-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                        </div>
+                                        <div class="node-state">ACTIVE</div>
+                                    </div>
+
+                                    <div class="packet-flow-lines">
+                                        <div class="packet-stream" id="udp-stream">
+                                            <span class="udp-drip d1">DNS Req</span>
+                                            <span class="udp-drip d2">DNS Req</span>
+                                            <span class="udp-drip d3">DNS Req</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="node host-server">
+                                        <div class="node-label">Server (Port 53)</div>
+                                        <div class="node-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect></svg>
+                                        </div>
+                                        <div class="node-state">LISTENING</div>
+                                    </div>
+                                </div>
+
+                                <div class="handshake-steps-nav">
+                                    <button class="step-btn active" onclick="fireUdpDatagram()">Fire Datagram Stream</button>
+                                </div>
+
+                                <div class="step-detail-box">
+                                    Notice that there are no synchronization steps. The client begins sending datagrams immediately. If a datagram is lost in transit, there is no transport-layer mechanism to detect or retransmit it.
+                                </div>
+                            </div>
+
+                            <!-- ICMP Type and Code details -->
+                            <div class="info-section" id="icmp-types-section" style="display: none;">
+                                <h3>Common ICMP Message Types</h3>
+                                <table class="cyber-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Code</th>
+                                            <th>Message Name</th>
+                                            <th>Use Case / Diagnostics</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="icmp-table-body">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- DNS Record Types -->
+                            <div class="info-section" id="dns-records-section" style="display: none;">
+                                <h3>Common DNS Resource Records</h3>
+                                <table class="cyber-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Record Type</th>
+                                            <th>Full Name</th>
+                                            <th>Description / Function</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dns-table-body">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- HTTP Methods -->
+                            <div class="info-section" id="http-methods-section" style="display: none;">
+                                <h3>HTTP Request Methods</h3>
+                                <table class="cyber-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Method</th>
+                                            <th>Description</th>
+                                            <th>Idempotent?</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="http-table-body">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- HTTPS TLS Handshake -->
+                            <div class="interactive-diagram-container" id="tls-handshake-section" style="display: none;">
+                                <h3>TLS 1.2/1.3 Secure Connection Handshake</h3>
+                                <p class="diagram-note">HTTPS layers HTTP inside an encrypted TLS session. This protocol exchange initializes symmetric encryption.</p>
+                                <div class="tls-timeline" id="tls-timeline-steps">
+                                    <!-- Populated via JS -->
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: PCAP ANATOMY -->
+            <section class="tab-panel" id="tab-pcap-anatomy">
+                <div class="card pcap-intro-card">
+                    <div class="pcap-intro-grid">
+                        <div class="intro-text">
+                            <h3>What is a PCAP File?</h3>
+                            <p><strong>PCAP</strong> (short for <strong>Packet Capture</strong>) is the standard file format used to store network packet data captured from live network interfaces. It was originally created for the <code>libpcap</code> library, which underlies both <strong>Wireshark</strong> and <strong>tcpdump</strong>.</p>
+                            <p>A PCAP file is not a high-level text log. Instead, it is a sequential log of raw binary frames exactly as they were pulled from the network card, wrapped in lightweight headers that supply timestamps and size metadata.</p>
+                            <div class="pcap-badges">
+                                <span class="pcap-badge">Global Header</span>
+                                <span class="pcap-badge">Packet Header</span>
+                                <span class="pcap-badge">Raw Ethernet Frame</span>
+                            </div>
+                        </div>
+                        <div class="intro-stats">
+                            <div class="console-box">
+                                <div class="console-header">
+                                    <span class="console-dot red"></span>
+                                    <span class="console-dot yellow"></span>
+                                    <span class="console-dot green"></span>
+                                    <span class="console-title">file_probe.sh</span>
+                                </div>
+                                <pre class="console-code"><code>$ file capture.pcap
+capture.pcap: pcap packet capture, \
+version 2.4 (Microsecond resolution, \
+magic: a1b2c3d4, \
+Ethernet, snaplen 65535)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card structure-card">
+                    <h3>PCAP Binary Anatomy Explorer</h3>
+                    <p class="diagram-note">Below is a simplified hex representation of a PCAP file containing a single ping request packet. <strong>Hover over the hex values</strong> to decode the binary structure.</p>
+                    
+                    <div class="hex-viewer-grid">
+                        <!-- Hex Viewport -->
+                        <div class="hex-viewport-card">
+                            <div class="hex-editor">
+                                <div class="hex-row">
+                                    <span class="hex-offset">00000000:</span>
+                                    <span class="hex-byte" data-field="magic">d4</span>
+                                    <span class="hex-byte" data-field="magic">c3</span>
+                                    <span class="hex-byte" data-field="magic">b2</span>
+                                    <span class="hex-byte" data-field="magic">a1</span>
+                                    <span class="hex-byte" data-field="version">02</span>
+                                    <span class="hex-byte" data-field="version">00</span>
+                                    <span class="hex-byte" data-field="version">04</span>
+                                    <span class="hex-byte" data-field="version">00</span>
+                                    <span class="hex-byte" data-field="timezone">00</span>
+                                    <span class="hex-byte" data-field="timezone">00</span>
+                                    <span class="hex-byte" data-field="timezone">00</span>
+                                    <span class="hex-byte" data-field="timezone">00</span>
+                                    <span class="hex-byte" data-field="sigfigs">00</span>
+                                    <span class="hex-byte" data-field="sigfigs">00</span>
+                                    <span class="hex-byte" data-field="sigfigs">00</span>
+                                    <span class="hex-byte" data-field="sigfigs">00</span>
+                                </div>
+                                <div class="hex-row">
+                                    <span class="hex-offset">00000010:</span>
+                                    <span class="hex-byte" data-field="snaplen">ff</span>
+                                    <span class="hex-byte" data-field="snaplen">ff</span>
+                                    <span class="hex-byte" data-field="snaplen">00</span>
+                                    <span class="hex-byte" data-field="snaplen">00</span>
+                                    <span class="hex-byte" data-field="network">01</span>
+                                    <span class="hex-byte" data-field="network">00</span>
+                                    <span class="hex-byte" data-field="network">00</span>
+                                    <span class="hex-byte" data-field="network">00</span>
+                                    <!-- End of Global Header -->
+                                    <!-- Start of Packet Header -->
+                                    <span class="hex-byte" data-field="ts-sec">d8</span>
+                                    <span class="hex-byte" data-field="ts-sec">1a</span>
+                                    <span class="hex-byte" data-field="ts-sec">8c</span>
+                                    <span class="hex-byte" data-field="ts-sec">66</span>
+                                    <span class="hex-byte" data-field="ts-usec">20</span>
+                                    <span class="hex-byte" data-field="ts-usec">4e</span>
+                                    <span class="hex-byte" data-field="ts-usec">0a</span>
+                                    <span class="hex-byte" data-field="ts-usec">00</span>
+                                </div>
+                                <div class="hex-row">
+                                    <span class="hex-offset">00000020:</span>
+                                    <span class="hex-byte" data-field="incl-len">3c</span>
+                                    <span class="hex-byte" data-field="incl-len">00</span>
+                                    <span class="hex-byte" data-field="incl-len">00</span>
+                                    <span class="hex-byte" data-field="incl-len">00</span>
+                                    <span class="hex-byte" data-field="orig-len">3c</span>
+                                    <span class="hex-byte" data-field="orig-len">00</span>
+                                    <span class="hex-byte" data-field="orig-len">00</span>
+                                    <span class="hex-byte" data-field="orig-len">00</span>
+                                    <!-- End of Packet Header -->
+                                    <!-- Start of Packet Data (Ethernet Header) -->
+                                    <span class="hex-byte" data-field="eth-dest">00</span>
+                                    <span class="hex-byte" data-field="eth-dest">0c</span>
+                                    <span class="hex-byte" data-field="eth-dest">29</span>
+                                    <span class="hex-byte" data-field="eth-dest">3e</span>
+                                    <span class="hex-byte" data-field="eth-dest">5b</span>
+                                    <span class="hex-byte" data-field="eth-dest">20</span>
+                                    <span class="hex-byte" data-field="eth-src">00</span>
+                                    <span class="hex-byte" data-field="eth-src">50</span>
+                                </div>
+                                <div class="hex-row">
+                                    <span class="hex-offset">00000030:</span>
+                                    <span class="hex-byte" data-field="eth-src">56</span>
+                                    <span class="hex-byte" data-field="eth-src">c0</span>
+                                    <span class="hex-byte" data-field="eth-src">00</span>
+                                    <span class="hex-byte" data-field="eth-src">08</span>
+                                    <span class="hex-byte" data-field="eth-type">08</span>
+                                    <span class="hex-byte" data-field="eth-type">00</span>
+                                    <!-- End Ethernet, Start IPv4 Header -->
+                                    <span class="hex-byte" data-field="ip-ver">45</span>
+                                    <span class="hex-byte" data-field="ip-tos">00</span>
+                                    <span class="hex-byte" data-field="ip-len">00</span>
+                                    <span class="hex-byte" data-field="ip-len">28</span>
+                                    <span class="hex-byte" data-field="ip-id">1b</span>
+                                    <span class="hex-byte" data-field="ip-id">4f</span>
+                                    <span class="hex-byte" data-field="ip-flag">40</span>
+                                    <span class="hex-byte" data-field="ip-flag">00</span>
+                                    <span class="hex-byte" data-field="ip-ttl">40</span>
+                                    <span class="hex-byte" data-field="ip-proto">01</span>
+                                </div>
+                                <div class="hex-row">
+                                    <span class="hex-offset">00000040:</span>
+                                    <span class="hex-byte" data-field="ip-checksum">ec</span>
+                                    <span class="hex-byte" data-field="ip-checksum">27</span>
+                                    <span class="hex-byte" data-field="ip-src">c0</span>
+                                    <span class="hex-byte" data-field="ip-src">a8</span>
+                                    <span class="hex-byte" data-field="ip-src">01</span>
+                                    <span class="hex-byte" data-field="ip-src">32</span>
+                                    <span class="hex-byte" data-field="ip-dest">08</span>
+                                    <span class="hex-byte" data-field="ip-dest">08</span>
+                                    <span class="hex-byte" data-field="ip-dest">08</span>
+                                    <span class="hex-byte" data-field="ip-dest">08</span>
+                                    <!-- End IPv4, Start ICMP Payload -->
+                                    <span class="hex-byte" data-field="icmp-type">08</span>
+                                    <span class="hex-byte" data-field="icmp-code">00</span>
+                                    <span class="hex-byte" data-field="icmp-chk">f7</span>
+                                    <span class="hex-byte" data-field="icmp-chk">ff</span>
+                                    <span class="hex-byte" data-field="icmp-id">00</span>
+                                    <span class="hex-byte" data-field="icmp-id">01</span>
+                                </div>
+                                <div class="hex-row">
+                                    <span class="hex-offset">00000050:</span>
+                                    <span class="hex-byte" data-field="icmp-seq">00</span>
+                                    <span class="hex-byte" data-field="icmp-seq">01</span>
+                                    <span class="hex-byte" data-field="icmp-data">61</span>
+                                    <span class="hex-byte" data-field="icmp-data">62</span>
+                                    <span class="hex-byte" data-field="icmp-data">63</span>
+                                    <span class="hex-byte" data-field="icmp-data">64</span>
+                                    <span class="hex-byte" data-field="icmp-data">65</span>
+                                    <span class="hex-byte" data-field="icmp-data">66</span>
+                                    <span class="hex-byte" data-field="icmp-data">67</span>
+                                    <span class="hex-byte" data-field="icmp-data">68</span>
+                                    <span class="hex-byte" data-field="icmp-data">69</span>
+                                    <span class="hex-byte" data-field="icmp-data">6a</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Decoder Explanation Box -->
+                        <div class="hex-decoder-panel">
+                            <div class="decoder-section">
+                                <h4 class="decoder-section-title">Anatomy Decoder</h4>
+                                <div id="decoder-idle-msg">Hover over any hex values on the left to analyze the byte definition.</div>
+                                
+                                <div id="decoder-active-info" style="display: none;">
+                                    <div class="decoder-field-name" id="decoder-field-name">MAGIC_NUMBER</div>
+                                    <div class="decoder-block-badge" id="decoder-block-name">GLOBAL HEADER</div>
+                                    <div class="decoder-size">Size: <span id="decoder-field-size">4 bytes</span></div>
+                                    <div class="decoder-raw-val">Value in Hex: <span id="decoder-field-hex">d4 c3 b2 a1</span></div>
+                                    <p class="decoder-desc" id="decoder-field-desc">Identifies this file as a PCAP capture. The sequence 'd4 c3 b2 a1' indicates reverse byte ordering (Little-Endian) on a microsecond-resolution capture.</p>
+                                </div>
+                            </div>
+
+                            <div class="layout-key">
+                                <h4>Color Code Key</h4>
+                                <ul class="key-list">
+                                    <li><span class="key-dot bg-global"></span> Global File Header (24B)</li>
+                                    <li><span class="key-dot bg-p-head"></span> Packet Metadata Header (16B)</li>
+                                    <li><span class="key-dot bg-ether"></span> Layer 2: Ethernet Header (14B)</li>
+                                    <li><span class="key-dot bg-ip"></span> Layer 3: IPv4 Header (20B)</li>
+                                    <li><span class="key-dot bg-payload"></span> Layer 4/Payload: ICMP (16B)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: CHEAT SHEETS (COMMANDS & FILTERS) -->
+            <section class="tab-panel" id="tab-cheatsheets">
+                <div class="cheatsheet-grid">
+                    <!-- tcpdump column -->
+                    <div class="cheatsheet-col">
+                        <div class="col-header">
+                            <div class="title-with-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="col-icon text-cyan">
+                                    <polyline points="4 17 10 11 4 5"></polyline>
+                                    <line x1="12" y1="19" x2="20" y2="19"></line>
+                                </svg>
+                                <h3>tcpdump Command Reference</h3>
+                            </div>
+                            <span class="cli-badge">CLI / Raw capture</span>
+                        </div>
+
+                        <div class="cheat-group">
+                            <h4>1. Device & Interface Selection</h4>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump -D</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump -D')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">List all network interfaces available for capture.</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump -i any</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump -i any')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Capture packets on all available interfaces (good for general sweeps).</span>
+                            </div>
+                        </div>
+
+                        <div class="cheat-group">
+                            <h4>2. File Input / Output Operations</h4>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump -w capture.pcap</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump -w capture.pcap')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Write captured packets raw into 'capture.pcap' instead of printing.</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump -r capture.pcap</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump -r capture.pcap')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Read and display packets from an existing PCAP file.</span>
+                            </div>
+                        </div>
+
+                        <div class="cheat-group">
+                            <h4>3. Filter Modifiers (BPF Syntax)</h4>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump port 80</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump port 80')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Filter traffic where source or destination port is 80 (HTTP).</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump host 192.168.1.1</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump host 192.168.1.1')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Filter traffic with matching source or destination IP.</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump src net 10.0.0.0/24</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump src net 10.0.0.0/24')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Filter traffic originating from a specific subnet range.</span>
+                            </div>
+                        </div>
+
+                        <div class="cheat-group">
+                            <h4>4. Tuning Output Output Details</h4>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump -n -nn</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump -n -nn')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Don't resolve hostnames (-n) or ports (-nn) to text. Runs faster.</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcpdump -vvv -X</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcpdump -vvv -X')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Maximum verbosity (-vvv) and show data payload in both Hex and ASCII (-X).</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wireshark column -->
+                    <div class="cheatsheet-col">
+                        <div class="col-header">
+                            <div class="title-with-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="col-icon text-purple">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <h3>Wireshark Display Filters</h3>
+                            </div>
+                            <span class="cli-badge bg-badge-purple">GUI / Analysis</span>
+                        </div>
+
+                        <div class="cheat-group">
+                            <h4>1. Filtering by Protocol</h4>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>dns</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'dns')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Matches all DNS query and response packets.</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>http</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'http')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Matches HTTP request/response packets (excludes HTTPS).</span>
+                            </div>
+                        </div>
+
+                        <div class="cheat-group">
+                            <h4>2. Filtering by Address (IP/MAC)</h4>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>ip.addr == 192.168.1.1</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'ip.addr == 192.168.1.1')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Matches packets where either IP source or destination matches.</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>ip.src != 10.0.0.5</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'ip.src != 10.0.0.5')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Matches packets where source IP is not the specified host.</span>
+                            </div>
+                        </div>
+
+                        <div class="cheat-group">
+                            <h4>3. Filtering by Port Numbers</h4>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcp.port == 443</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcp.port == 443')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Matches packets using TCP source or destination port 443 (HTTPS).</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>udp.port == 53</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'udp.port == 53')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Matches UDP DNS standard packets.</span>
+                            </div>
+                        </div>
+
+                        <div class="cheat-group">
+                            <h4>4. Advanced Payload & Logic Matching</h4>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>http.request.method == "POST"</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'http.request.method == &quot;POST&quot;')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Matches HTTP packets where request method is POST.</span>
+                            </div>
+                            <div class="cmd-box">
+                                <div class="cmd-line">
+                                    <code>tcp.flags.syn == 1 && tcp.flags.ack == 0</code>
+                                    <button class="copy-btn" onclick="copyCode(this, 'tcp.flags.syn == 1 && tcp.flags.ack == 0')">Copy</button>
+                                </div>
+                                <span class="cmd-desc">Matches only initial TCP SYN connection requests.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card sandbox-card">
+                    <h3>Display Filter Validation Sandbox</h3>
+                    <p class="diagram-note">Practice writing Wireshark display filters below. We will analyze the syntax structure for you.</p>
+                    <div class="sandbox-input-row">
+                        <input type="text" id="sandbox-filter-input" placeholder="e.g. ip.addr == 192.168.1.1 && tcp.port == 80" autocomplete="off">
+                        <button class="action-btn" onclick="validateSandboxFilter()">Validate Syntax</button>
+                    </div>
+                    <div class="sandbox-response" id="sandbox-response">
+                        <div class="sandbox-response-status idle">
+                            <span class="status-icon">⚙️</span>
+                            <span>Enter a query to validate your display filter syntax.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: INTERACTIVE QUIZ -->
+            <section class="tab-panel" id="tab-quiz">
+                <div class="quiz-container">
+                    <!-- Quiz Intro State -->
+                    <div class="quiz-card" id="quiz-intro-state">
+                        <div class="quiz-badge">READY TO START</div>
+                        <h2>Network Traffic Analysis Challenge</h2>
+                        <p>Evaluate your skills on protocols, packet structure, and CLI/GUI display filters. Test yourself with 8 fundamental multiple-choice questions.</p>
+                        
+                        <div class="quiz-meta-info">
+                            <div class="meta-item">
+                                <span class="meta-val">8</span>
+                                <span class="meta-label">Questions</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-val">100%</span>
+                                <span class="meta-label">Pass Rate</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-val">L3/L4/L7</span>
+                                <span class="meta-label">Coverage</span>
+                            </div>
+                        </div>
+
+                        <button class="action-btn start-quiz-btn" onclick="startQuiz()">
+                            <span>Initialize Challenge</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Quiz Active State (Hidden by default) -->
+                    <div class="quiz-card" id="quiz-active-state" style="display: none;">
+                        <div class="quiz-header-row">
+                            <span class="q-progress-lbl" id="quiz-progress-text">Question 1 of 8</span>
+                            <span class="q-timer" id="quiz-timer">00:00</span>
+                        </div>
+                        <div class="quiz-progress-track">
+                            <div class="quiz-progress-bar" id="quiz-progress-bar" style="width: 12.5%;"></div>
+                        </div>
+
+                        <h3 class="quiz-question" id="quiz-question-text">Question content goes here?</h3>
+
+                        <div class="quiz-options-list" id="quiz-options-list">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <div class="quiz-feedback-box" id="quiz-feedback-box" style="display: none;">
+                            <div class="feedback-indicator" id="feedback-indicator">
+                                <span class="status-bullet"></span>
+                                <span class="status-msg">CORRECT</span>
+                            </div>
+                            <p class="feedback-explanation" id="feedback-explanation">Explanation content goes here.</p>
+                        </div>
+
+                        <div class="quiz-actions-row">
+                            <button class="action-btn next-q-btn" id="next-q-btn" onclick="submitOrNextQuestion()" disabled>Submit Answer</button>
+                        </div>
+                    </div>
+
+                    <!-- Quiz Results State (Hidden by default) -->
+                    <div class="quiz-card" id="quiz-result-state" style="display: none;">
+                        <div class="result-celebration" id="result-status-badge">CHALLENGE COMPLETED</div>
+                        <h2 class="result-title" id="result-rank-title">Protocol Cadet</h2>
+                        
+                        <div class="score-display">
+                            <span class="score-num" id="score-raw">0</span>
+                            <span class="score-divider">/</span>
+                            <span class="score-total">8</span>
+                        </div>
+                        <p class="score-percentage" id="score-percent">0% Accuracy</p>
+                        
+                        <p class="result-message" id="result-message">Good attempt! Go back and review protocol flows to secure your understanding.</p>
+
+                        <div class="results-actions">
+                            <button class="action-btn outline" onclick="resetQuiz()">Restart Challenge</button>
+                            <button class="action-btn" onclick="navigateToTab('linkedin')">Generate Shareable Certificate</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: LINKEDIN GENERATOR -->
+            <section class="tab-panel" id="tab-linkedin">
+                <div class="linkedin-card-grid">
+                    <!-- Form Controls -->
+                    <div class="card generator-form">
+                        <h3>Draft Your Accomplishment</h3>
+                        <p class="diagram-note">Customize the details of your study session to generate a personalized post ready to share on LinkedIn.</p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Topics Explored:</label>
+                            <div class="checkbox-grid">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="topic-checkbox" value="TCP 3-Way Handshake" checked>
+                                    <span class="checkmark"></span>
+                                    <span>TCP Handshakes</span>
+                                </label>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="topic-checkbox" value="UDP Datagrams" checked>
+                                    <span class="checkmark"></span>
+                                    <span>UDP Flows</span>
+                                </label>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="topic-checkbox" value="PCAP Binary Headers" checked>
+                                    <span class="checkmark"></span>
+                                    <span>PCAP Binary Structures</span>
+                                </label>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="topic-checkbox" value="tcpdump Command Line" checked>
+                                    <span class="checkmark"></span>
+                                    <span>tcpdump Syntax</span>
+                                </label>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="topic-checkbox" value="Wireshark Display Filters" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Wireshark Filters</span>
+                                </label>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" class="topic-checkbox" value="DNS & ICMP Headers" checked>
+                                    <span class="checkmark"></span>
+                                    <span>DNS / ICMP Ports</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Quiz Performance Integration:</label>
+                            <div class="score-integration-box">
+                                <span class="score-preview" id="link-score-preview">Quiz Score: 0/8</span>
+                                <span class="score-status-sub" id="link-score-status">Submit your quiz scores to feature them!</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Post Persona / Tone:</label>
+                            <div class="tone-radio-group">
+                                <label class="radio-container">
+                                    <input type="radio" name="tone" value="enthusiastic" checked>
+                                    <span class="radiomark"></span>
+                                    <span>🚀 Enthusiastic</span>
+                                </label>
+                                <label class="radio-container">
+                                    <input type="radio" name="tone" value="technical">
+                                    <span class="radiomark"></span>
+                                    <span>📊 Technical</span>
+                                </label>
+                                <label class="radio-container">
+                                    <input type="radio" name="tone" value="beginner">
+                                    <span class="radiomark"></span>
+                                    <span>🌱 Beginner</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button class="action-btn full-width" onclick="generateLinkedInPost()">
+                            <span>Compile Post Draft</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Post Preview -->
+                    <div class="card generator-preview">
+                        <div class="card-header border-bottom">
+                            <h3>Compiled Post Output</h3>
+                            <span class="status-badge-live">READY TO COPY</span>
+                        </div>
+                        
+                        <div class="post-textarea-wrapper">
+                            <textarea id="linkedin-post-output" readonly placeholder="Your compiled social post will appear here..."></textarea>
+                        </div>
+
+                        <div class="preview-actions">
+                            <button class="action-btn copy-post-btn" id="btn-copy-post" onclick="copyLinkedInPost()">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                <span id="copy-btn-text">Copy to Clipboard</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Notification system for copy confirmations, etc -->
+    <div class="toast" id="toast-notify">Copied successfully to clipboard!</div>
+
+    <!-- Local JS execution -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
